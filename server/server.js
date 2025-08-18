@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { initializeDatabase } from './database.js';
 import { loginUser, verifyToken, createUser, updateUser, deleteUser } from './auth.js';
 import { clockIn, clockOut, getTodayEntry, getOvertimeRequests, approveOvertime } from './timeTracking.js';
+import { fileAttendanceCorrection, getAttendanceCorrectionRequests, updateAttendanceCorrectionStatus } from './attendance.js';
 import { generateWeeklyPayslips, generatePayslipsForDateRange, generatePayslipsForSpecificDays, getPayrollReport, updatePayrollEntry } from './payroll.js';
 import { pool } from './database.js';
 
@@ -62,6 +63,23 @@ app.post('/api/clock-in', authenticate, async (req, res) => {
   }
 });
 
+app.get('/api/attendance-corrections', authenticate, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  const requests = await getAttendanceCorrectionRequests();
+  res.json(requests);
+});
+
+app.put('/api/attendance-corrections/:id', authenticate, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  const { status } = req.body;
+  const result = await updateAttendanceCorrectionStatus(req.params.id, status);
+  res.json(result);
+});
+
 app.post('/api/reset-clock-in', authenticate, async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
@@ -78,6 +96,15 @@ app.post('/api/reset-clock-in', authenticate, async (req, res) => {
   } catch (error) {
     console.error('Reset clock in error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+app.post('/api/attendance-correction', authenticate, async (req, res) => {
+  const result = await fileAttendanceCorrection(req.user.userId, req.body);
+  if (result.success) {
+    res.json(result);
+  } else {
+    res.status(400).json(result);
   }
 });
 

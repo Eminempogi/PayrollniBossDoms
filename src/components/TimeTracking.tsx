@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_ENDPOINTS, buildApiUrl } from '../config/api';
-import { Clock, Play, Square, MessageSquare, AlertCircle, Home, BarChart3, X, Target, TrendingUp, Edit3, Check, Calendar, Timer, Award, Zap } from 'lucide-react';
+import { Clock, Play, Square, MessageSquare, AlertCircle, Home, BarChart3, X, Target, TrendingUp, Edit3, Check, Calendar, Timer, Award, Zap, FileText } from 'lucide-react';
 import { PayrollHistory } from './PayrollHistory';
+import { AttendanceFilingModal } from './AttendanceFiling';
 import { isToday } from 'date-fns/isToday';
 
 interface TimeEntry {
@@ -29,6 +30,7 @@ export function TimeTracking() {
   const [todayEntry, setTodayEntry] = useState<TimeEntry | null>(null);
   const [overtimeNote, setOvertimeNote] = useState('');
   const [showOvertimeModal, setShowOvertimeModal] = useState(false);
+  const [showAttendanceFilingModal, setShowAttendanceFilingModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -241,6 +243,31 @@ export function TimeTracking() {
     } catch (error) {
       console.error('Clock out error:', error);
       alert('Failed to clock out');
+    }
+    setIsLoading(false);
+  };
+
+  const handleFileAttendance = async (details: any) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.ATTENDANCE_CORRECTION, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(details),
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Attendance correction request submitted successfully!');
+        setShowAttendanceFilingModal(false);
+      } else {
+        alert(data.message || 'Failed to submit attendance correction request');
+      }
+    } catch (error) {
+      console.error('Attendance correction error:', error);
+      alert('Failed to submit attendance correction request');
     }
     setIsLoading(false);
   };
@@ -683,6 +710,13 @@ export function TimeTracking() {
                           <Clock className="w-5 h-5" />
                           Request Overtime
                         </button>
+                        <button
+                          onClick={() => setShowAttendanceFilingModal(true)}
+                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 btn-enhanced flex items-center justify-center gap-2 shadow-lg"
+                        >
+                          <FileText className="w-5 h-5" />
+                          File Attendance
+                        </button>
                       </div>
                     </div>
 
@@ -849,6 +883,15 @@ export function TimeTracking() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Attendance Filing Modal */}
+      {showAttendanceFilingModal && (
+        <AttendanceFilingModal
+          onClose={() => setShowAttendanceFilingModal(false)}
+          onSubmit={handleFileAttendance}
+          isLoading={isLoading}
+        />
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { PayrollReports } from './PayrollReports';
 import { LiveReports } from './LiveReports';
 import { PayslipLogs } from './PayslipLogs';
 import { DepartmentOverview } from './DepartmentOverview';
+import { AttendanceCorrectionRequests } from './AttendanceCorrectionRequests';
 import { 
   Users, 
   PhilippinePeso, 
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react';
 import { OvertimeApproval } from './OvertimeApproval';
 
-type TabType = 'users' | 'overtime' | 'payroll' | 'live-reports' | 'time-logs' | 'payslip-logs' | 'department-overview';
+type TabType = 'users' | 'overtime' | 'payroll' | 'live-reports' | 'time-logs' | 'payslip-logs' | 'department-overview' | 'attendance-corrections';
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('users');
@@ -62,9 +63,10 @@ export function AdminDashboard() {
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'payroll', label: 'Payroll', icon: PhilippinePeso },
     { id: 'overtime', label: 'Overtime', icon: Clock },
+    { id: 'attendance-corrections', label: 'Corrections', icon: FileText },
     { id: 'department-overview', label: 'Department Overview', icon: Building2 },
-    { id: 'live-reports', label: 'Live Reports', icon: Activity },
-    { id: 'payslip-logs', label: 'Payslip Logs', icon: FileText }
+    { id: 'live-reports', 'label': 'Live Reports', icon: Activity },
+    { id: 'payslip-logs', 'label': 'Payslip Logs', icon: FileText }
   ];
 
   return (
@@ -155,6 +157,7 @@ export function AdminDashboard() {
           {activeTab === 'users' && <UserManagement />}
           {activeTab === 'payroll' && <PayrollReports />}
           {activeTab === 'overtime' && <OvertimeApproval />}
+          {activeTab === 'attendance-corrections' && <AttendanceCorrectionRequests />}
           {activeTab === 'department-overview' && <DepartmentOverview />}
           {activeTab === 'live-reports' && <LiveReports />}
           {activeTab === 'payslip-logs' && <PayslipLogs />}
