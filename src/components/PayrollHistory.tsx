@@ -1,3 +1,4 @@
+// import { startOfWeek, endOfWeek } from 'date-fns';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { buildApiUrl } from '../config/api';
@@ -46,16 +47,24 @@ export function PayrollHistory() {
   }, []);
 
   const getWeekStart = (date: Date) => {
-    const start = startOfWeek(date, { weekStartsOn: 1 });
-    return start.toISOString().split('T')[0];
+    // Always get Monday as start of week
+    const day = date.getDay();
+    const diff = (day === 0 ? -6 : 1) - day; // If Sunday, go back 6 days, else go to Monday
+    const monday = new Date(date);
+    monday.setDate(date.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday.toISOString().split('T')[0];
   };
 
   const getWeekEnd = (weekStart: string) => {
+    // Always 6 days after weekStart
     const start = new Date(weekStart);
     if (isNaN(start.getTime())) {
       return new Date().toISOString().split('T')[0];
     }
-    const end = endOfWeek(start, { weekStartsOn: 1 });
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
     return end.toISOString().split('T')[0];
   };
 
@@ -157,11 +166,11 @@ export function PayrollHistory() {
   };
 
   const calculateStats = () => {
-    const totalEarnings = payrollHistory.reduce((sum, entry) => sum + (parseFloat(entry.total_salary) || 0), 0);
-    const totalHours = payrollHistory.reduce((sum, entry) => sum + (parseFloat(entry.total_hours) || 0), 0);
-    const totalOvertimeHours = payrollHistory.reduce((sum, entry) => sum + (parseFloat(entry.overtime_hours) || 0), 0);
-    const totalOvertimePay = payrollHistory.reduce((sum, entry) => sum + (parseFloat(entry.overtime_pay) || 0), 0);
-    const totalDeductions = payrollHistory.reduce((sum, entry) => sum + (parseFloat(entry.undertime_deduction) || 0) + (parseFloat(entry.staff_house_deduction) || 0), 0);
+    const totalEarnings = payrollHistory.reduce((sum, entry) => sum + (typeof entry.total_salary === 'number' ? entry.total_salary : parseFloat(entry.total_salary) || 0), 0);
+    const totalHours = payrollHistory.reduce((sum, entry) => sum + (typeof entry.total_hours === 'number' ? entry.total_hours : parseFloat(entry.total_hours) || 0), 0);
+    const totalOvertimeHours = payrollHistory.reduce((sum, entry) => sum + (typeof entry.overtime_hours === 'number' ? entry.overtime_hours : parseFloat(entry.overtime_hours) || 0), 0);
+    const totalOvertimePay = payrollHistory.reduce((sum, entry) => sum + (typeof entry.overtime_pay === 'number' ? entry.overtime_pay : parseFloat(entry.overtime_pay) || 0), 0);
+    const totalDeductions = payrollHistory.reduce((sum, entry) => sum + (typeof entry.undertime_deduction === 'number' ? entry.undertime_deduction : parseFloat(entry.undertime_deduction) || 0) + (typeof entry.staff_house_deduction === 'number' ? entry.staff_house_deduction : parseFloat(entry.staff_house_deduction) || 0), 0);
 
     return {
       totalEarnings,
@@ -370,28 +379,28 @@ export function PayrollHistory() {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div>
-                        <p className="text-white">{(parseFloat(entry.total_hours) || 0).toFixed(2)}h</p>
-                        {(parseFloat(entry.undertime_hours) || 0) > 0 && (
-                          <p className="text-sm text-red-400">-{(parseFloat(entry.undertime_hours) || 0).toFixed(2)}h</p>
+                        <p className="text-white">{(typeof entry.total_hours === 'number' ? entry.total_hours : parseFloat(entry.total_hours) || 0).toFixed(2)}h</p>
+                        {(typeof entry.undertime_hours === 'number' ? entry.undertime_hours : parseFloat(entry.undertime_hours) || 0) > 0 && (
+                          <p className="text-sm text-red-400">-{(typeof entry.undertime_hours === 'number' ? entry.undertime_hours : parseFloat(entry.undertime_hours) || 0).toFixed(2)}h</p>
                         )}
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right text-orange-400">
-                      {(parseFloat(entry.overtime_hours) || 0) > 0 ? `${(parseFloat(entry.overtime_hours) || 0).toFixed(2)}h` : '-'}
+                      {(typeof entry.overtime_hours === 'number' ? entry.overtime_hours : parseFloat(entry.overtime_hours) || 0) > 0 ? `${(typeof entry.overtime_hours === 'number' ? entry.overtime_hours : parseFloat(entry.overtime_hours) || 0).toFixed(2)}h` : '-'}
                     </td>
                     <td className="py-3 px-4 text-right text-white">
-                      {formatCurrency(parseFloat(entry.base_salary) || 0)}
+                      {formatCurrency(typeof entry.base_salary === 'number' ? entry.base_salary : parseFloat(entry.base_salary) || 0)}
                     </td>
                     <td className="py-3 px-4 text-right text-emerald-400">
-                      {(parseFloat(entry.overtime_pay) || 0) > 0 ? formatCurrency(parseFloat(entry.overtime_pay) || 0) : '-'}
+                      {(typeof entry.overtime_pay === 'number' ? entry.overtime_pay : parseFloat(entry.overtime_pay) || 0) > 0 ? formatCurrency(typeof entry.overtime_pay === 'number' ? entry.overtime_pay : parseFloat(entry.overtime_pay) || 0) : '-'}
                     </td>
                     <td className="py-3 px-4 text-right text-red-400">
-                      {((parseFloat(entry.undertime_deduction) || 0) + (parseFloat(entry.staff_house_deduction) || 0)) > 0 
-                        ? formatCurrency((parseFloat(entry.undertime_deduction) || 0) + (parseFloat(entry.staff_house_deduction) || 0)) 
+                      {((typeof entry.undertime_deduction === 'number' ? entry.undertime_deduction : parseFloat(entry.undertime_deduction) || 0)) > 0 
+                        ? formatCurrency((typeof entry.undertime_deduction === 'number' ? entry.undertime_deduction : parseFloat(entry.undertime_deduction) || 0) + (typeof entry.staff_house_deduction === 'number' ? entry.staff_house_deduction : parseFloat(entry.staff_house_deduction) || 0)) 
                         : '-'}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <p className="font-bold text-white">{formatCurrency(parseFloat(entry.total_salary) || 0)}</p>
+                      <p className="font-bold text-white">{formatCurrency(typeof entry.total_salary === 'number' ? entry.total_salary : parseFloat(entry.total_salary) || 0)}</p>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-900/20 text-emerald-400 border border-emerald-800/50">
