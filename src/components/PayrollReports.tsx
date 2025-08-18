@@ -1,11 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_ENDPOINTS, buildApiUrl } from '../config/api';
 import { Calendar, Download, FileText, Users, PhilippinePeso, Clock, Edit3, Save, X, AlertTriangle, CheckCircle, Filter, Search, Eye, Trash2, Play } from 'lucide-react';
 import { Calculator } from 'lucide-react';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import { startOfWeek, endOfWeek } from 'date-fns';
+
+interface User {
+  id: number;
+  username: string;
+  department: string;
+  active: boolean;
+}
 
 interface PayrollEntry {
   id: number;
@@ -22,11 +31,17 @@ interface PayrollEntry {
   undertime_deduction: number;
   staff_house_deduction: number;
   total_salary: number;
-  clock_in_time: string;
+  date: string; // Added date field for individual entries
+  clock_in_time: number | string; // Changed to allow both number and string for flexibility
   clock_out_time: string;
   status: string;
 }
 
+interface generatePayslipsRequest {
+weekStart?: string;
+selectedDates?: string[];
+userIds?: number[];
+}
 const DEPARTMENTS = [
   'Human Resource',
   'Marketing', 
@@ -46,7 +61,7 @@ export function PayrollReports() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [generationMode, setGenerationMode] = useState<'week' | 'dates'>('week');
+  const [generationMode, setGenerationMode] = useState<'week' | 'dates'>('dates');
   const [editingEntry, setEditingEntry] = useState<PayrollEntry | null>(null);
   const [editForm, setEditForm] = useState({
     clockIn: '',
@@ -71,6 +86,18 @@ export function PayrollReports() {
   const [groupByUser, setGroupByUser] = useState(false);
   const { token } = useAuth();
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.USERS, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setUsers(data.filter((user: User) => user.active));
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchUsers();
     // Get start of week (Sunday)
@@ -83,7 +110,7 @@ export function PayrollReports() {
     setSelectedWeek(currentWeekStart);
     setSelectedEndWeek(currentWeekEnd);
 
-  }, []);
+  }, [fetchUsers]);
 
   const getWeekStart = (date: Date) => {
     const start = startOfWeek(date, { weekStartsOn: 1 });
@@ -117,32 +144,6 @@ export function PayrollReports() {
     return weeks;
   };
 
-  const generateDateOptions = () => {
-    const dates = [];
-    const today = new Date();
-    
-    // Generate last 30 days
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      dates.push(date.toISOString().split('T')[0]);
-    }
-    
-    return dates;
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.USERS, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      setUsers(data.filter((user: any) => user.active));
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
-
   const generatePayslips = async () => {
     if (generationMode === 'week' && !selectedWeek) {
       alert('Please select a week');
@@ -156,12 +157,10 @@ export function PayrollReports() {
 
     setLoading(true);
     try {
-      let requestBody: any = {};
+      const requestBody: generatePayslipsRequest = {};
       
       if (generationMode === 'week') {
         requestBody.weekStart = selectedWeek;
-        requestBody.startDate = selectedWeek;
-        requestBody.endDate = selectedEndWeek;
       } else {
         requestBody.selectedDates = selectedDates;
       }
@@ -202,14 +201,21 @@ export function PayrollReports() {
 
     setLoading(true);
     try {
-      let url = API_ENDPOINTS.PAYROLL_REPORT;
-      
+      const params: any = {};
+     
       if (generationMode === 'week') {
-        url = buildApiUrl('/api/payroll-report', { weekStart: selectedWeek, startDate: selectedWeek, endDate: selectedEndWeek });
+        params.weekStart = selectedWeek;
+        params.startDate = selectedWeek;
+        params.endDate = selectedEndWeek;
       } else {
-        const datesParam = selectedDates.join(',');
-        url = buildApiUrl('/api/payroll-report', { selectedDates: datesParam });
+        params.selectedDates = selectedDates.join(',');
       }
+     
+      if (selectedUsers.length > 0) {
+        params.userIds = selectedUsers.join(',');
+      }
+ 
+      const url = buildApiUrl('/api/payroll-report', params);
       
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -248,7 +254,7 @@ export function PayrollReports() {
 
     setLoading(true);
     try {
-      let requestBody: any = {};
+      const requestBody: generatePayslipsRequest = {};
       
       if (generationMode === 'week') {
         requestBody.selectedDates = [selectedWeek, selectedEndWeek];
@@ -442,14 +448,14 @@ export function PayrollReports() {
       entry.username,
       entry.department,
       Number(entry.totalHours).toFixed(2),
-      Number(entry.totalOvertimeHours).toFixed(2),
+      Number(entry.totalBaseSalary).toFixed(2),
       Number(entry.totalOvertimePay).toFixed(2),
       Number(entry.totalDeductions).toFixed(2),
       Number(entry.totalSalary).toFixed(2),
     ]);
 
     autoTable(doc, {
-      head: [['Employee', 'Department', 'Hours', 'OT Hours', 'OT Pay', 'Deductions', 'Total']],
+      head: [['Employee', 'Department', 'Hours', 'Base Pay', 'OT Pay', 'Deductions', 'Total']],
       body: tableData,
       startY: 40,
       styles: { fontSize: 8 },
@@ -638,7 +644,7 @@ export function PayrollReports() {
   console.log(groupedTotalSalary);
 
   const weekOptions = generateWeekOptions();
-  const dateOptions = generateDateOptions();
+  //const dateOptions = generateDateOptions();
 
   return (
     <div>
@@ -668,7 +674,7 @@ export function PayrollReports() {
             <input
               type="radio"
               value="dates"
-              checked={generationMode === 'dates'}
+              defaultChecked={generationMode === 'dates'}
               onChange={(e) => setGenerationMode(e.target.value as 'week' | 'dates')}
               className="text-emerald-600 focus:ring-emerald-500"
             />
@@ -712,26 +718,30 @@ export function PayrollReports() {
                 <label className="block text-sm font-medium text-slate-300 mb-3">
                   Select Dates ({selectedDates.length} selected)
                 </label>
-                <div className="bg-slate-700/30 rounded-lg p-4 max-h-60 overflow-y-auto border border-slate-600/50">
-                  <div className="grid grid-cols-2 gap-2">
-                    {dateOptions.map(date => (
-                      <label key={date} className="flex items-center space-x-2 p-2 hover:bg-slate-600/30 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedDates.includes(date)}
-                          onChange={() => handleDateToggle(date)}
-                          className="rounded border-slate-600 text-emerald-600 focus:ring-emerald-500 bg-slate-700/50"
-                        />
-                        <span className="text-sm text-slate-300">
-                          {new Date(date).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+                <div className="bg-[#B1E6F3] rounded-lg p-4 border border-slate-600/50">
+                      <DayPicker className ="text-sm font-medium text-black justify-center"
+                        mode="multiple"
+                        min={1}
+                        selected={selectedDates.map(dateStr => new Date(dateStr + 'T00:00:00'))} 
+                        onSelect={(dates) => { 
+                          if (dates) {
+                            const formattedDates = dates.map(date => {
+                              const y = date.getFullYear();
+                              const m = (date.getMonth() + 1).toString().padStart(2, '0');
+                              const d = date.getDate(). toString().padStart(2, '0');
+                              return `${y}-${m}-${d}`;
+                            });
+                            setSelectedDates(formattedDates);
+                          }
+                        }}
+                        classNames= {{head_cell: 'bg-slate-700/50 text-white w-full',
+                        button: 'bg-black',
+                        day: 'text-black hover rounded-lg',
+                        selected: 'bg-emerald-500/80 text-black hover-emerald-600/80 rounded-lg',
+                        today: 'text-red-900',
+                        caption_label: 'text-black font-semibold-large',
+                        nav_button: 'hover:bg-red/20 text-red rounded-lg',}}
+                      />
                 </div>
               </div>
             )}
@@ -931,13 +941,13 @@ export function PayrollReports() {
             <Download className="w-4 h-4" />
             Export PDF
           </button>
-          <button
+          {/* <button
             onClick={exportToCSV}
             className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center gap-2 shadow-lg"
           >
             <Download className="w-4 h-4" />
             Export CSV
-          </button>
+          </button> */}
         </div>
       )}
 
@@ -1044,7 +1054,7 @@ export function PayrollReports() {
                           </p>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-sm text-right">
                         <div>
                           <p className="text-white">{Number(entry.total_hours).toFixed(2)}h</p>
                           {entry.overtime_hours > 0 && (
