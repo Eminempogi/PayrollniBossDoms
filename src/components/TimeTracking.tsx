@@ -501,7 +501,7 @@ export function TimeTracking() {
                         <p className="text-sm text-white/80">
                           <strong>Motivational Note:</strong>
                         </p>
-                        <p className="text-white/80">Keep Going, para sa 500K ni Dom at Lev!</p>
+                        <p className="text-white/80">If you can dream it, you can do it.</p>
                       </div>
                     </div>
                     
@@ -824,7 +824,7 @@ export function TimeTracking() {
                 onChange={(e) => setOvertimeNote(e.target.value)}
                 className="w-full p-3 bg-slate-50/80 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-500 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 rows={4}
-                placeholder="Please explain the reason for overtime work..."
+                placeholder="Please explain the reason for Overtime and if approved by your Supervisor"
                 required
               />
             </div>
@@ -835,14 +835,14 @@ export function TimeTracking() {
                   setShowOvertimeModal(false);
                   setOvertimeNote('');
                 }}
-                className="flex-1 bg-slate-200/80 text-slate-700 py-3 px-4 rounded-lg font-medium hover:bg-slate-300/80 transition-all duration-200"
+                className="flex-1 bg-red-400 text-slate-700 py-3 px-4 rounded-lg font-medium hover:bg-red-200 transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={submitOvertimeRequest}
                 disabled={!overtimeNote.trim() || isLoading}
-                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 btn-enhanced"
+                className="flex-1 bg-gradient-to-r from-[#B1E6F3] from to-indigo-900 text-white py-3 px-4 rounded-lg font-medium hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-50 btn-enhanced"
               >
                 {isLoading ? 'Submitting...' : 'Submit Request'}
               </button>
