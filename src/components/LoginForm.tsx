@@ -24,7 +24,7 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-canary from-50% to-[#f59bb8] to-50% flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-r from-indigo-900 from to-[#B1E6F3] flex items-center justify-center p-4">
       <div className="bg-[#34256b] rounded-2xl shadow-2xl p-8 w-full max-w-md border border-slate-700/50">
         <div className="text-center mb-8">
           <div className="mx-auto w-40 h-30 bg-[#34256b] rounded-full flex items-center justify-center mb-4">
