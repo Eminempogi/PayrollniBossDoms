@@ -22,6 +22,10 @@ export const API_ENDPOINTS = {
   OVERTIME_REQUESTS: `${API_BASE_URL}/api/overtime-requests`,
   OVERTIME_REQUEST: `${API_BASE_URL}/api/overtime-request`,
   OVERTIME_NOTIFICATIONS: `${API_BASE_URL}/api/overtime-notifications`,
+
+  // Attendance correction endpoints
+  ATTENDANCE_CORRECTION: `${API_BASE_URL}/api/attendance-correction`,
+  ATTENDANCE_CORRECTIONS: `${API_BASE_URL}/api/attendance-corrections`,
   
   // Admin overtime endpoints
   OVERTIME_APPROVE: (id: string) => `${API_BASE_URL}/api/overtime-requests/${id}/approve`,
