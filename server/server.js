@@ -139,7 +139,7 @@ app.get('/api/users', authenticate, async (req, res) => {
     const [users] = await pool.execute(
       'SELECT id, username, role, department, staff_house, gcash_number, required_hours, active, created_at FROM users ORDER BY department, username'
     );
-res.json(users);
+    res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ message: 'Server error' });
