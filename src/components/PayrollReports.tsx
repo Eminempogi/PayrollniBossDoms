@@ -399,7 +399,7 @@ export function PayrollReports() {
     if (!deletingEntry) return;
 
     try {
-      const response = await fetch(`http://192.168.100.60:3001/api/payroll/${deletingEntry.id}`, {
+      const response = await fetch(`http://116.50.227.178:3001/api/payroll/${deletingEntry.id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -856,7 +856,7 @@ export function PayrollReports() {
           </div>
           <div className="flex items-center justify-end mt-4">
             <label htmlFor="group-by-user" className="flex items-center cursor-pointer">
-              <span className="mr-3 text-sm font-medium text-slate-300">Compile all details per user</span>
+              <span className="mr-3 text-sm font-medium text-slate-300">Compile details per user (Include Staff House Deduction)</span>
               <div className="relative">
                 <input
                   type="checkbox"

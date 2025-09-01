@@ -96,10 +96,12 @@ export function UserManagement() {
   const [selectedUserForEntry, setSelectedUserForEntry] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(new Set(DEPARTMENTS));
+  const [isInactiveExpanded, setInactiveExpanded] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState('');
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<User[]>([]);
+  const [inactiveUsers, setInactiveUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -129,7 +131,8 @@ export function UserManagement() {
 
   useEffect(() => {
     if (searchTerm.length > 0) {
-      const suggestions = users.filter(user => 
+      const allUsers = [...users, ...inactiveUsers];
+      const suggestions = allUsers.filter(user => 
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.department.toLowerCase().includes(searchTerm.toLowerCase())
       ).slice(0, 5); // Limit to 5 suggestions
@@ -139,7 +142,7 @@ export function UserManagement() {
       setSearchSuggestions([]);
       setShowSearchDropdown(false);
     }
-  }, [searchTerm, users]);
+  }, [searchTerm, users, inactiveUsers]);
 
   const handleSearchSelect = (user: User) => {
     setSearchTerm(user.username);
@@ -150,6 +153,10 @@ export function UserManagement() {
     const newExpanded = new Set(expandedDepartments);
     newExpanded.add(user.department);
     setExpandedDepartments(newExpanded);
+
+    if (inactiveUsers.find(u => u.id === user.id)) {
+      setInactiveExpanded(true);
+    }
     
     // Scroll to the department after a short delay
     setTimeout(() => {
@@ -173,7 +180,20 @@ export function UserManagement() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
-      setUsers(data);
+      
+      const active = [];
+      const inactive = [];
+
+      for (const user of data) {
+        if (user.active) {
+          active.push(user);
+        } else {
+          inactive.push(user);
+        }
+      }
+
+      setUsers(active);
+      setInactiveUsers(inactive);
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -369,8 +389,13 @@ export function UserManagement() {
     setExpandedDepartments(newExpanded);
   };
 
+  const toggleInactive = () => {
+    setInactiveExpanded(!isInactiveExpanded);
+  };
+
   const exportToCSV = () => {
-    if (users.length === 0) return;
+    const allUsers = [...users, ...inactiveUsers];
+    if (allUsers.length === 0) return;
 
     const headers = [
       'Username',
@@ -382,7 +407,7 @@ export function UserManagement() {
       'Created Date'
     ];
 
-    const rows = users.map(user => [
+    const rows = allUsers.map(user => [
       user.username,
       user.role,
       user.department,
@@ -404,7 +429,8 @@ export function UserManagement() {
   };
 
   // Group users by department
-  const filteredUsers = users.filter(user => {
+  const allUsers = [...users, ...inactiveUsers];
+  const filteredUsers = allUsers.filter(user => {
     const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.department.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment = selectedDepartmentFilter === '' || user.department === selectedDepartmentFilter;
@@ -412,11 +438,11 @@ export function UserManagement() {
   });
 
   const groupedUsers = DEPARTMENTS.reduce((acc, dept) => {
-    acc[dept] = filteredUsers.filter(user => user.department === dept);
+    acc[dept] = filteredUsers.filter(user => user.department === dept && users.includes(user));
     return acc;
   }, {} as Record<string, User[]>);
 
-  const totalUsers = users.length;
+  const totalUsers = allUsers.length;
   const activeUsers = filteredUsers.filter(user => user.active).length;
   const totalFiltered = filteredUsers.length;
 
@@ -717,6 +743,113 @@ export function UserManagement() {
             </div>
           );
         })}
+
+        {/* Inactive Users Card */}
+        <div
+          className={`bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-slate-700/50 h-fit`}
+        >
+          <button
+            onClick={toggleInactive}
+            className={`w-full px-3 py-2.5 bg-gradient-to-r from-slate-700/30 to-slate-800/30 border-b border-slate-700/50 flex items-center justify-between hover:opacity-80 transition-all duration-200`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`bg-gradient-to-br from-slate-600/20 to-slate-700/20 p-1 rounded-lg border border-slate-600/30`}>
+                <Clock className={`w-4 h-4 text-slate-400`} />
+              </div>
+              <div className="text-left">
+                <h3 className={`text-sm font-semibold text-slate-300`}>Inactive Users</h3>
+                <p className="text-xs text-slate-400">
+                  {inactiveUsers.length} total
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium border border-slate-600 text-slate-300`}>
+                {inactiveUsers.length} users
+              </span>
+              {isInactiveExpanded ? (
+                <ChevronUp className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              )}
+            </div>
+          </button>
+
+          {isInactiveExpanded && (
+            <div className={`divide-y max-h-96 overflow-y-auto`} style={{ borderColor: 'rgba(71, 85, 105, 0.2)' }}>
+              {inactiveUsers.length > 0 ? (
+                inactiveUsers.map((user) => (
+                  <div 
+                    key={user.id} 
+                    id={`user-${user.id}`}
+                    className={`p-4 hover:bg-slate-700/20 transition-all duration-200 border-l-2 border-transparent hover:border-l-red-500/50 last:border-b-0`}
+                    style={{ 
+                      borderBottomColor: 'rgba(71, 85, 105, 0.2)'
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className={`bg-gradient-to-br from-slate-600/20 to-slate-700/20 p-1.5 rounded-lg border border-slate-600/30 flex-shrink-0`}>
+                          {user.role === 'admin' ? (
+                            <Shield className={`w-3.5 h-3.5 text-slate-400`} />
+                          ) : (
+                            <User className={`w-3.5 h-3.5 text-slate-400`} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-white text-base break-words">{user.username}</h4>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-700/50`}>
+                              Inactive
+                            </span>
+                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-700/30 text-gray-300 border border-gray-600/50">
+                              {user.department}
+                            </span>
+                          </div>
+                          <div className="mt-3 space-y-1.5 bg-slate-800/30 p-2 rounded-lg border border-slate-600/30">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-slate-500">Created:</span>
+                              <span className="text-slate-300">{new Date(user.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="text-blue-400 hover:text-blue-300 p-1.5 rounded-lg hover:bg-blue-900/30 transition-all duration-200 border border-transparent hover:border-blue-700/50"
+                          title="Edit User"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(user)}
+                          className="text-red-400 hover:text-red-300 p-1.5 rounded-lg hover:bg-red-900/30 transition-all duration-200 border border-transparent hover:border-red-700/50"
+                          title="Delete User"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center">
+                  <div className={`bg-gradient-to-br from-slate-600/20 to-slate-700/20 p-2 rounded-full w-8 h-8 mx-auto mb-2 flex items-center justify-center border border-slate-600/30`}>
+                    <User className={`w-4 h-4 text-slate-400`} />
+                  </div>
+                  <h3 className="text-sm font-medium text-white mb-1">No Inactive Users</h3>
+                  <p className="text-xs text-slate-400">
+                    All users are currently active.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* User Modal */}

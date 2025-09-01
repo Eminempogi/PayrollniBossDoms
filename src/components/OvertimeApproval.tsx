@@ -74,7 +74,7 @@ export function OvertimeApproval() {
     const clockInTime = new Date(clockIn);
     const clockOutTime = new Date(clockOut);
     const overtimeThreshold = new Date(clockInTime);
-    overtimeThreshold.setHours(16, 0, 0, 0); // 4:00 PM (30 minutes after 3:30 PM shift end)
+    overtimeThreshold.setHours(15, 30, 0, 0); // 4:00 PM (30 minutes after 3:30 PM shift end)
 
     if (clockOutTime > overtimeThreshold) {
       const overtime = (clockOutTime.getTime() - overtimeThreshold.getTime()) / (1000 * 60 * 60);
