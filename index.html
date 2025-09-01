@@ -5,9 +5,162 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Employee Time Tracking and Payroll Management System</title>
+     <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+    <style>
+      :root {
+        --chat--color-primary: #5130e4;
+        --chat--color-primary-shade-50: #4d39c0;
+        --chat--color-primary-shade-100: #1682ca;
+        --chat--color-secondary: #20b69e;
+        --chat--color-white: #ffffff;
+        --chat--color-light: #f2f4f8;
+        --chat--color-light-shade-50: #e6e9f1;
+        --chat--color-light-shade-100: #c2c5cc;
+        --chat--color-medium: #d2d4d9;
+        --chat--color-dark: #101330;
+        --chat--color-disabled: #777980;
+        --chat--color-typing: #404040;
+
+        --chat--spacing: 0.75rem;
+        --chat--border-radius: 0.5rem;
+        --chat--transition-duration: 0.2s;
+
+        --chat--window--width: 320px;
+        --chat--window--height: 480px;
+
+        --chat--header--background: #1a2a58;      /* Dark blue header */
+        --chat--header--color: var(--chat--color-white);
+        --chat--heading--font-size: 1.75em;
+        --chat--subtitle--font-size: 0.9em;
+        --chat--subtitle--line-height: 1.2;
+
+        --chat--textarea--height: 40px;
+        --chat--message--font-size: 0.95rem;
+        --chat--message--line-height: 1.6;
+      }
+
+      /* Container */
+      .chat-window {
+        width: var(--chat--window--width);
+        height: var(--chat--window--height);
+        background: var(--chat--color-white);
+        border-radius: var(--chat--border-radius);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      /* Header */
+      .chat-header {
+        background: var(--chat--header--background);
+        color: var(--chat--header--color);
+        padding: var(--chat--spacing);
+        text-align: center;
+      }
+      .chat-header h1 {
+        font-size: var(--chat--heading--font-size);
+        margin: 0;
+      }
+      .chat-header p {
+        font-size: var(--chat--subtitle--font-size);
+        margin: 4px 0 0;
+        line-height: var(--chat--subtitle--line-height);
+      }
+
+      /* Chat body */
+      .chat-body {
+        flex: 1;
+        padding: var(--chat--spacing);
+        background: var(--chat--color-light-shade-50);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--chat--spacing);
+      }
+      .chat-body .message {
+        max-width: 80%;
+        font-size: var(--chat--message--font-size);
+        line-height: var(--chat--message--line-height);
+        padding: var(--chat--spacing);
+        border-radius: var(--chat--border-radius);
+        align-self: flex-start;
+        background: var(--chat--color-light);
+        color: var(--chat--color-dark);
+      }
+      .chat-body .user {
+        background: #2956a3; /* Medium-dark blue */
+        color: var(--chat--color-white);
+        align-self: flex-end;
+      }
+
+      /* Input area */
+      .chat-input {
+        display: flex;
+        padding: var(--chat--spacing);
+        border-top: 1px solid var(--chat--color-medium);
+      }
+      .chat-input textarea {
+        flex: 1;
+        height: var(--chat--textarea--height);
+        border-radius: var(--chat--border-radius);
+        border: 1px solid var(--chat--color-medium);
+        padding: var(--chat--spacing);
+        font-size: var(--chat--message--font-size);
+        resize: none;
+      }
+      .chat-input button {
+        margin-left: var(--chat--spacing);
+        padding: 0 var(--chat--spacing);
+        border: none;
+        background: var(--chat--color-primary);
+        color: var(--chat--color-white);
+        font-size: 1em;
+        border-radius: var(--chat--border-radius);
+        cursor: pointer;
+        transition: background var(--chat--transition-duration);
+      }
+      .chat-input button:hover {
+        background: var(--chat--color-primary-shade-50);
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script type="module">
+      import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+      createChat({
+        webhookUrl: 'https://workflow.backroomop.com/webhook/911d5e4b-30fe-461f-9925-cfb3b7600410/chat',
+        webhookConfig: {
+          method: 'POST',
+          headers: {}
+        },
+        target: '#n8n-chat',
+        mode: 'window',
+        chatInputKey: 'chatInput',
+        chatSessionKey: 'sessionId',
+        loadPreviousSession: true,
+        metadata: {},
+        showWelcomeScreen: false,
+        defaultLanguage: 'en',
+        initialMessages: [
+          'Hi there! 👋',
+          'My name is BuzDomz. How can I assist you today?'
+        ],
+        i18n: {
+          en: {
+            title: 'Hi there! 👋',
+            subtitle: "Start a chat if you have any queries.",
+            footer: '',
+            getStarted: 'New Conversation',
+            inputPlaceholder: 'Type your question..',
+          },
+        },
+        enableStreaming: false,
+      });
+    </script>
   </body>
 </html>

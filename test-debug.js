@@ -1,7 +1,7 @@
 // Simple test script to debug payslip release issue
 const fetch = require('node-fetch');
 
-const API_BASE_URL = 'http://192.168.100.60:3001';
+const API_BASE_URL = 'http://116.50.227.178:3001';
 
 async function testDebug() {
   try {
