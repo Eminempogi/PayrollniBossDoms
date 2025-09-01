@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = 'http://192.168.100.60:3001';
+export const API_BASE_URL = 'http://116.50.227.178:3001';
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -22,6 +22,10 @@ export const API_ENDPOINTS = {
   OVERTIME_REQUESTS: `${API_BASE_URL}/api/overtime-requests`,
   OVERTIME_REQUEST: `${API_BASE_URL}/api/overtime-request`,
   OVERTIME_NOTIFICATIONS: `${API_BASE_URL}/api/overtime-notifications`,
+
+  // Attendance correction endpoints
+  ATTENDANCE_CORRECTION: `${API_BASE_URL}/api/attendance-correction`,
+  ATTENDANCE_CORRECTIONS: `${API_BASE_URL}/api/attendance-corrections`,
   
   // Admin overtime endpoints
   OVERTIME_APPROVE: (id: string) => `${API_BASE_URL}/api/overtime-requests/${id}/approve`,
