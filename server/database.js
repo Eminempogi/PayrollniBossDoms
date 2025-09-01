@@ -61,6 +61,23 @@ export async function initializeDatabase() {
       )
     `);
 
+    // Attendance corrections table
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS attendance_corrections (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        date DATE NOT NULL,
+        clock_in DATETIME NOT NULL,
+        clock_out DATETIME NOT NULL,
+        reason TEXT NOT NULL,
+        approved_by_senior VARCHAR(255) NOT NULL,
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `);
+
     // Payslips table with clock in/out times
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS payslips (

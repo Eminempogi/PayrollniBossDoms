@@ -564,44 +564,44 @@ export async function generateWeeklyPayslips(weekStart) {
   }
 }
 
-export async function getPayrollReport(startDate, endDate, selectedDates = []) {
+export async function getPayrollReport(startDate, endDate, selectedDates = [], userIds = []) {
   try {
-    let query, params;
+    let query;
+    let params = [];
+    let whereClauses = [];
 
     if (selectedDates.length > 0) {
       const placeholders = selectedDates.map(() => '?').join(',');
-      query = `
-        SELECT p.*, u.username, u.department
-        FROM payslips p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.week_start IN (${placeholders})
-        ORDER BY u.department, u.username, p.week_start
-      `;
-      params = selectedDates;
-
+         whereClauses.push(`p.week_start IN (${placeholders})`);
+      params.push(...selectedDates);
+ 
     } else if (startDate && endDate) {
-      query = `
-        SELECT p.*, u.username, u.department
-        FROM payslips p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.week_start BETWEEN ? AND ?
-        ORDER BY u.department, u.username, p.week_start
-      `;
-      params = [startDate, endDate];
-
+      whereClauses.push(`p.week_start BETWEEN ? AND ?`);
+      params.push(startDate, endDate);
+ 
     } else if (startDate) {
-      query = `
-        SELECT p.*, u.username, u.department
-        FROM payslips p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.week_start = ?
-        ORDER BY u.department, u.username, p.week_start
-      `;
-      params = [startDate];
-
-    } else {
+      whereClauses.push(`p.week_start = ?`);
+      params.push(startDate);
+    }
+ 
+    if (userIds && userIds.length > 0) {
+      const userPlaceholders = userIds.map(() => '?').join(',');
+      whereClauses.push(`p.user_id IN (${userPlaceholders})`);
+      params.push(...userIds);
+    }
+ 
+    if (whereClauses.length === 0) {
       return []; // No valid filters
     }
+ 
+    query = `
+      SELECT p.*, u.username, u.department
+      FROM payslips p
+      JOIN users u ON p.user_id = u.id
+      WHERE ${whereClauses.join(' AND ')}
+      ORDER BY u.department, u.username, p.week_start
+    `;
+ 
 
     const [payslips] = await pool.execute(query, params);
     console.log(payslips);
