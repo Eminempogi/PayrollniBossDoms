@@ -72,6 +72,7 @@ export async function initializeDatabase() {
         reason TEXT NOT NULL,
         approved_by_senior VARCHAR(255) NOT NULL,
         status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        is_overtime BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
@@ -132,6 +133,16 @@ export async function initializeDatabase() {
       await pool.execute(`
         ALTER TABLE users 
         ADD COLUMN required_hours DECIMAL(5,2) DEFAULT 0
+      `);
+    } catch (error) {
+      // Column might already exist, ignore error
+    }
+
+    // Add is_overtime column to attendance_corrections if it doesn't exist
+    try {
+      await pool.execute(`
+        ALTER TABLE attendance_corrections
+        ADD COLUMN is_overtime BOOLEAN DEFAULT FALSE
       `);
     } catch (error) {
       // Column might already exist, ignore error
