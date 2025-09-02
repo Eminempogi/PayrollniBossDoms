@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, MessageSquare, UserCheck } from 'lucide-react';
 
 interface AttendanceFilingModalProps {
@@ -13,6 +13,15 @@ export function AttendanceFilingModal({ onClose, onSubmit, isLoading }: Attendan
   const [clockOut, setClockOut] = useState('');
   const [reason, setReason] = useState('');
   const [approvedBy, setApprovedBy] = useState('');
+  const [isOvertime, setIsOvertime] = useState(false);
+
+  useEffect(() => {
+    if (isOvertime) {
+      setReason('Overtime');
+    } else {
+      setReason('');
+    }
+  }, [isOvertime]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +29,7 @@ export function AttendanceFilingModal({ onClose, onSubmit, isLoading }: Attendan
       alert('Please fill in all fields.');
       return;
     }
-    onSubmit({ date, clockIn, clockOut, reason, approvedBy });
+    onSubmit({ date, clockIn, clockOut, reason, approvedBy, isOvertime });
   };
 
   return (
@@ -86,6 +95,28 @@ export function AttendanceFilingModal({ onClose, onSubmit, isLoading }: Attendan
             </div>
           </div>
 
+          <div className="flex items-center justify-between">
+            <label htmlFor="is-overtime" className="block text-sm font-medium text-slate-800">
+              Is this overtime?
+            </label>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isOvertime}
+              onClick={() => setIsOvertime(!isOvertime)}
+              className={`${
+                isOvertime ? 'bg-indigo-600' : 'bg-slate-300'
+              } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+            >
+              <span
+                aria-hidden="true"
+                className={`${
+                  isOvertime ? 'translate-x-5' : 'translate-x-0'
+                } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+              />
+            </button>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-2">
               Reason
@@ -99,6 +130,7 @@ export function AttendanceFilingModal({ onClose, onSubmit, isLoading }: Attendan
                 rows={3}
                 placeholder="Explain why you are filing for a correction"
                 required
+                disabled={isOvertime}
               />
             </div>
           </div>
