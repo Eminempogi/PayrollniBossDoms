@@ -1022,6 +1022,7 @@ export function PayrollReports() {
                   <tr>
                     <th className="text-left py-3 px-4 font-semibold text-slate-300">Employee</th>
                     <th className="text-left py-3 px-4 font-semibold text-slate-300">Department</th>
+                    <th className="text-left py-3 px-4 font-semibold text-slate-300">Date</th>
                     <th className="text-left py-3 px-4 font-semibold text-slate-300">Time</th>
                     <th className="text-right py-3 px-4 font-semibold text-slate-300">Hours</th>
                     <th className="text-right py-3 px-4 font-semibold text-slate-300">Base Pay</th>
@@ -1044,6 +1045,7 @@ export function PayrollReports() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-slate-300">{entry.department}</td>
+                      <td className="py-3 px-4 text-slate-300">{formatDate(entry.week_start)}</td>
                       <td className="py-3 px-4">
                         <div className="text-sm">
                           <p className="text-slate-300">
