@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { buildApiUrl } from '../config/api';
 import { Calendar, PhilippinePeso, Clock, TrendingUp, Download } from 'lucide-react';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
 import { startOfWeek, endOfWeek } from 'date-fns';
 
 interface PayrollEntry {
@@ -25,26 +27,12 @@ interface PayrollEntry {
 export function PayrollHistory() {
   const [payrollHistory, setPayrollHistory] = useState<PayrollEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedWeek, setSelectedWeek] = useState('');
-  const [selectedDay, setSelectedDay] = useState('');
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const { token, user } = useAuth();
 
   useEffect(() => {
     fetchPayrollHistory();
-  }, []);
-
-  useEffect(() => {
-    if (selectedWeek) {
-      fetchPayrollHistory();
-    }
-  }, [selectedWeek, selectedDay]);
-
-  useEffect(() => {
-    // Set current week as default after component mounts
-    const today = new Date();
-    const currentWeekStart = getWeekStart(today);
-    setSelectedWeek(currentWeekStart);
-  }, []);
+  }, [selectedDates]);
 
   const getWeekStart = (date: Date) => {
     // Always get Monday as start of week
@@ -56,87 +44,27 @@ export function PayrollHistory() {
     return monday.toISOString().split('T')[0];
   };
 
-  const getWeekEnd = (weekStart: string) => {
-    // Always 6 days after weekStart
-    const start = new Date(weekStart);
-    if (isNaN(start.getTime())) {
-      return new Date().toISOString().split('T')[0];
-    }
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    return end.toISOString().split('T')[0];
-  };
-
-  const generateDaysInWeek = (weekStart: string) => {
-    const days = [];
-    const start = new Date(weekStart);
-    
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(start);
-      day.setDate(start.getDate() + i);
-      days.push({
-        value: day.toISOString().split('T')[0],
-        label: day.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          month: 'short', 
-          day: 'numeric' 
-        })
-      });
-    }
-    
-    return days;
-  };
-
-  const generateWeekOptions = () => {
-    const weeks = [];
-    const today = new Date();
-    
-    // Generate last 12 weeks
-    for (let i = 0; i < 12; i++) {
-      const weekDate = new Date(today);
-      weekDate.setDate(today.getDate() - (i * 7));
-      const weekStart = getWeekStart(weekDate);
-      const weekEnd = getWeekEnd(weekStart);
-      
-      weeks.push({
-        value: weekStart,
-        label: `${formatDate(weekStart)} - ${formatDate(weekEnd)}`,
-        isCurrent: i === 0
-      });
-    }
-    
-    return weeks;
-  };
 
   const fetchPayrollHistory = async () => {
-    if (!selectedWeek) return;
+    if (selectedDates.length === 0) {
+      setPayrollHistory([]);
+      return;
+    }
     
     setLoading(true);
     try {
-      let url = buildApiUrl('/api/user-payroll-history');
-      
-      if (selectedDay) {
-        // If specific day is selected, fetch only that day's data
-        url = buildApiUrl('/api/user-payroll-history', {
-          specificDay: selectedDay,
+      const fetchPromises = selectedDates.map(date => {
+        const specificDay = date.toISOString().split('T')[0];
+        const url = buildApiUrl('/api/user-payroll-history', {
+          specificDay,
           status: 'released'
         });
-      } else {
-        // Fetch entire week
-        const weekEnd = selectedWeek ? getWeekEnd(selectedWeek) : new Date().toISOString().split('T')[0];
-        url = buildApiUrl('/api/user-payroll-history', {
-          weekStart: selectedWeek,
-          weekEnd: weekEnd,
-          status: 'released'
-        });
-      }
-      
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        return fetch(url, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.json());
       });
-      const data = await response.json();
-      setPayrollHistory(data);
+
+      const results = await Promise.all(fetchPromises);
+      const combinedData = results.flat(); // Flatten the array of arrays
+      setPayrollHistory(combinedData);
     } catch (error) {
       console.error('Error fetching payroll history:', error);
       setPayrollHistory([]); // Reset to empty array on error
@@ -224,57 +152,69 @@ export function PayrollHistory() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${user?.username}_payroll_week_${selectedWeek}.csv`;
+    const date = new Date().toISOString().split('T')[0];
+    link.download = `${user?.username}_payroll_export_${date}.csv`;
     link.click();
   };
 
+  const [showCalendar, setShowCalendar] = useState(false);
   const stats = calculateStats();
-  const weekOptions = generateWeekOptions();
-  const daysInWeek = selectedWeek ? generateDaysInWeek(selectedWeek) : [];
+
+  const handleDaySelect = (dates: Date[] | undefined) => {
+    if (dates) {
+      setSelectedDates(dates);
+    }
+  };
+
+  const getSelectedDatesText = () => {
+    if (selectedDates.length === 0) return 'Select dates';
+    if (selectedDates.length === 1) return formatDate(selectedDates[0].toISOString());
+    return `${selectedDates.length} dates selected`;
+  };
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Payroll History</h2>
           <p className="text-white font-medium">View your weekly earnings and work statistics</p>
         </div>
-        <div className="flex items-center gap-4">
-          <select
-            value={selectedWeek}
-            onChange={(e) => setSelectedWeek(e.target.value)}
-            className="bg-white border border-slate-600 text-black/80 px-3 py-2 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-          >
-            {weekOptions.map(week => (
-              <option key={week.value} value={week.value}>
-                {week.label} {week.isCurrent ? '(Current Week)' : ''}
-              </option>
-            ))}
-          </select>
-          
-          {/* Day selector */}
-          <select
-            value={selectedDay}
-            onChange={(e) => setSelectedDay(e.target.value)}
-            className="bg-white border border-slate-600 text-black/ px-3 py-2 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-          >
-            <option value="">All Days</option>
-            {daysInWeek.map(day => (
-              <option key={day.value} value={day.value}>
-                {day.label}
-              </option>
-            ))}
-          </select>
-          
-          {payrollHistory.length > 0 && (
+          <div className="flex items-center">
+          {/* Calendar Button */}
+          <div className="relative mr-4">
             <button
-              onClick={exportToCSV}
-              className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-lg font-medium hover:from-emerald-600 hover:to-green-700 transition-all duration-200 flex items-center gap-2 shadow-lg"
+              onClick={() => setShowCalendar(!showCalendar)}
+              className="bg-white border border-slate-600 text-black/80 px-3 py-2 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent flex items-center gap-2"
             >
-              <Download className="w-4 h-4" />
-              Export CSV
+              <Calendar className="w-4 h-4" />
+              {getSelectedDatesText()}
             </button>
-          )}
+            {showCalendar && (
+              <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-lg">
+                <DayPicker
+                  mode="multiple"
+                  min={0}
+                  selected={selectedDates}
+                  onSelect={handleDaySelect}
+                  showOutsideDays
+                  fixedWeeks
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Reserve space for Export CSV */}
+          <div className="w-[150px] flex justify-end">
+            {payrollHistory.length > 0 && (
+              <button
+                onClick={exportToCSV}
+                className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-lg font-medium hover:from-emerald-600 hover:to-green-700 transition-all duration-200 flex items-center gap-2 shadow-lg"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -339,10 +279,7 @@ export function PayrollHistory() {
         <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-slate-700/50">
           <div className="bg-slate-700/50 px-6 py-4 border-b border-slate-600/50">
             <h3 className="text-lg font-semibold text-white">
-              {selectedDay 
-                ? `${daysInWeek.find(d => d.value === selectedDay)?.label || formatDate(selectedDay)}`
-                : `Week of ${formatDate(selectedWeek)} - ${formatDate(getWeekEnd(selectedWeek))}`
-              }
+              {getSelectedDatesText()}
             </h3>
             <p className="text-sm text-slate-400 mt-1">Released Payslips Only</p>
           </div>
@@ -350,7 +287,7 @@ export function PayrollHistory() {
             <table className="min-w-full">
               <thead className="bg-slate-700/50">
                 <tr>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-300">Period</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-300">Date</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-300">Time</th>
                   <th className="text-right py-3 px-4 font-semibold text-slate-300">Hours</th>
                   <th className="text-right py-3 px-4 font-semibold text-slate-300">Overtime</th>
@@ -367,7 +304,7 @@ export function PayrollHistory() {
                     <td className="py-3 px-4">
                       <div>
                         <p className="font-medium text-white">
-                          {formatDate(entry.week_start)} - {formatDate(entry.week_end)}
+                          {formatDate(entry.week_start)}
                         </p>
                       </div>
                     </td>
@@ -420,7 +357,7 @@ export function PayrollHistory() {
           </div>
           <h3 className="text-lg font-bold text-white/80 mb-2">No Released Payslips</h3>
           <p className="text-white/80">
-            No released payroll records found for the selected {selectedDay ? 'day' : 'week'}. 
+            No released payroll records found for the selected dates. 
             Payslips will appear here once an admin releases them.
           </p>
           <div className="mt-4 bg-white/80 p-4 rounded-lg border border-blue-800/50 max-w-md mx-auto">

@@ -876,7 +876,7 @@ export function TimeTracking() {
               <button
                 onClick={submitOvertimeRequest}
                 disabled={!overtimeNote.trim() || isLoading}
-                className="flex-1 bg-gradient-to-r from-[#B1E6F3] from to-indigo-900 text-white py-3 px-4 rounded-lg font-medium hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-50 btn-enhanced"
+                className="flex-1 bg-gradient-to-r from-[#B1E6F3] to-indigo-900 text-white py-3 px-4 rounded-lg font-medium hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-50 btn-enhanced"
               >
                 {isLoading ? 'Submitting...' : 'Submit Request'}
               </button>

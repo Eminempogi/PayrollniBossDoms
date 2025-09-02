@@ -22,14 +22,14 @@ const DEPARTMENTS = [
 ];
 
 const DEPARTMENT_COLORS = {
-  'Human Resource': 'text-orange-400',
-  'Marketing': 'text-gray-400',
-  'Finance': 'text-sky-400',
-  'Account Management': 'text-yellow-400',
-  'System Automation': 'text-green-400',
-  'Sales': 'text-pink-400',
-  'Training': 'text-cyan-400',
-  'IT Department': 'text-purple-400'
+  'Human Resource': 'from-orange-500/20 to-orange-600/20 border-orange-700/50 text-orange-400',
+  'Marketing': 'from-gray-500/20 to-gray-600/20 border-gray-700/50 text-gray-400',
+  'Finance': 'from-sky-500/20 to-sky-600/20 border-sky-700/50 text-sky-400',
+  'Account Management': 'from-yellow-500/20 to-yellow-600/20 border-yellow-700/50 text-yellow-400',
+  'System Automation': 'from-green-500/20 to-green-600/20 border-green-700/50 text-green-400',
+  'Sales': 'from-pink-500/20 to-pink-600/20 border-pink-700/50 text-pink-400',
+  'Training': 'from-cyan-500/20 to-cyan-600/20 border-cyan-700/50 text-cyan-400',
+  'IT Department': 'from-purple-500/20 to-purple-600/20 border-purple-700/50 text-purple-400'
 };
 
 export function LiveReports() {

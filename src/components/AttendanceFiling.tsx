@@ -13,15 +13,15 @@ export function AttendanceFilingModal({ onClose, onSubmit, isLoading }: Attendan
   const [clockOut, setClockOut] = useState('');
   const [reason, setReason] = useState('');
   const [approvedBy, setApprovedBy] = useState('');
-  const [isOvertime, setIsOvertime] = useState(false);
+  const [is_overtime, setis_overtime] = useState(false);
 
   useEffect(() => {
-    if (isOvertime) {
-      setReason('Overtime');
+    if (is_overtime) {
+      setReason('');
     } else {
       setReason('');
     }
-  }, [isOvertime]);
+  }, [is_overtime]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +29,7 @@ export function AttendanceFilingModal({ onClose, onSubmit, isLoading }: Attendan
       alert('Please fill in all fields.');
       return;
     }
-    onSubmit({ date, clockIn, clockOut, reason, approvedBy, isOvertime });
+    onSubmit({ date, clockIn, clockOut, reason, approvedBy, is_overtime });
   };
 
   return (
@@ -97,21 +97,21 @@ export function AttendanceFilingModal({ onClose, onSubmit, isLoading }: Attendan
 
           <div className="flex items-center justify-between">
             <label htmlFor="is-overtime" className="block text-sm font-medium text-slate-800">
-              Is this overtime?
+              Overtime yarn??
             </label>
             <button
               type="button"
               role="switch"
-              aria-checked={isOvertime}
-              onClick={() => setIsOvertime(!isOvertime)}
+              aria-checked={is_overtime}
+              onClick={() => setis_overtime(!is_overtime)}
               className={`${
-                isOvertime ? 'bg-indigo-600' : 'bg-slate-300'
+                is_overtime ? 'bg-indigo-600' : 'bg-slate-300'
               } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
             >
               <span
                 aria-hidden="true"
                 className={`${
-                  isOvertime ? 'translate-x-5' : 'translate-x-0'
+                  is_overtime ? 'translate-x-5' : 'translate-x-0'
                 } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
               />
             </button>
@@ -128,9 +128,9 @@ export function AttendanceFilingModal({ onClose, onSubmit, isLoading }: Attendan
                 onChange={(e) => setReason(e.target.value)}
                 className="w-full p-3 pl-10 bg-slate-50/80 border border-slate-200 rounded-lg text-slate-800 resize-none"
                 rows={3}
-                placeholder="Explain why you are filing for a correction"
+                placeholder={is_overtime ? "Explain your overtime reason" : "Explain why you are filing for a correction"}
                 required
-                disabled={isOvertime}
+                ///disabled={is_overtime}
               />
             </div>
           </div>
