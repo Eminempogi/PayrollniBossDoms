@@ -1,7 +1,7 @@
 import { pool } from './database.js';
 
 export async function fileAttendanceCorrection(userId, details) {
-  const { date, clockIn, clockOut, reason, approvedBy, isOvertime } = details;
+  const { date, clockIn, clockOut, reason, approvedBy, is_overtime } = details;
 
   if (!date || !clockIn || !clockOut || !reason || !approvedBy) {
     return { success: false, message: 'Missing required fields.' };
@@ -14,7 +14,7 @@ export async function fileAttendanceCorrection(userId, details) {
     await pool.execute(
       `INSERT INTO attendance_corrections (user_id, date, clock_in, clock_out, reason, approved_by_senior, is_overtime)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [userId, date, clockInDateTime, clockOutDateTime, reason, approvedBy, isOvertime]
+      [userId, date, clockInDateTime, clockOutDateTime, reason, approvedBy, is_overtime ? 1 : 0]
     );
 
     return { success: true, message: 'Attendance correction request filed successfully.' };
@@ -27,7 +27,7 @@ export async function fileAttendanceCorrection(userId, details) {
 export async function getAttendanceCorrectionRequests() {
   try {
     const [requests] = await pool.execute(`
-      SELECT ac.id, ac.user_id, ac.date, ac.clock_in, ac.clock_out, ac.reason, ac.approved_by_senior, ac.status, ac.is_overtime, u.username
+      SELECT ac.id, ac.user_id, ac.date, ac.clock_in, ac.clock_out, ac.reason, ac.approved_by_senior, ac.status, ac.is_overtime, u.username 
       FROM attendance_corrections ac
       JOIN users u ON ac.user_id = u.id
       ORDER BY ac.created_at DESC
